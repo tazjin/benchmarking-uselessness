@@ -93,9 +93,18 @@ noop_statrs: noop.rs
 		-C 'target-feature=+crt-static'
 	strip noop_statrs
 
+# This is a bit tricky. Compiling a Rust binary without the standard library requires
+# the libc crate, but there's no easy non-cargo way to install that.
+noop_nostdrs: noop_nostd.rs
+	cp noop_nostdrs_cargo.toml Cargo.toml
+	env RUSTFLAGS="-C target-feature=+crt-static" \
+	    cargo build --target x86_64-unknown-linux-musl --release
+	mv target/x86_64-unknown-linux-musl/release/noop_nostdrs noop_nostdrs
+	strip noop_nostdrs
+
 .PHONY: clean
 clean:
-	rm looprun \
+	rm -r looprun \
 	noop.o \
 	noop_mono.exe \
 	Noop.class \
@@ -115,6 +124,7 @@ clean:
 	noop_chicken \
 	noop_rs \
 	noop_statrs \
+	noop_nostdrs Cargo.* target \
 	|| true
 
 define announce
@@ -431,3 +441,9 @@ bench_statrs: looprun noop_statrs
 	$(call announce,"Rust (static, musl)")
 	./looprun 42 -2  noop_statrs
 	./looprun 42 1000 noop_statrs
+
+.PHONY: bench_nostdrs
+bench_nostdrs: looprun noop_nostdrs
+	$(call announce,"Rust (static, no stdlib)")
+	./looprun 42 -2  noop_nostdrs
+	./looprun 42 1000 noop_nostdrs

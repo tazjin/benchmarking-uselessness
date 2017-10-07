@@ -5,3 +5,5 @@ noop.cmi
 noop.cmx
 noop.hi
 noop.o
+Cargo.*
+release
